@@ -1,6 +1,6 @@
 from numpy import *
 from PIL import Image
-from noise import pnoise2
+from noise import pnoise3
 
 import time
 
@@ -26,14 +26,18 @@ LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA        = 10   # DMA channel to use for generating signal (try 10)
-LED_BRIGHTNESS = 250     # Set to 0 for darkest and 255 for brightest
+LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
 
-w = 144 # width of pixel matrix
-h = int(LED_COUNT/w) # height of pixel matrix
-img_rgb_matrix = [[[] for x in range(h)] for y in range(w)] # construct matrix to hold rgb vals
+w = 12 # width of pixel matrix
+h = 12 # height of pixel matrix
+mag = 10 # magnification/scale of perlin field
+octaves = 4 
+timing = 0.005
+min_bright = 0
+max_bright = 255
 
 def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
     return((((abs(val)-smin)*(tmax-tmin))/(smax-smin))+tmin)
@@ -41,36 +45,29 @@ def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
 def reset_strip():
     for i in range(LED_COUNT):
         strip.setPixelColor(i, Color(0,0,0))
-        
-def display_img(strip, matrix, iterations=3000000):
-    octaves = 4
-
+       
+def build_matrix(count):
     span = 144 #(h*w)
-    for octave in range(1,octaves):
-        for count in range(iterations):
-            for i in range(h):
-                for j in range(w):
-                    led_index = LED_COUNT - int(i*w+j) -1
-                    position = led_index/LED_COUNT
-        #            blueColor = (float(led_index)/span)
-         #           redColor = (float(led_index)/span)
-              #      blueColor   = interp(led_index, 0,50,0,255)
-                    blueColor   = int(interp(pnoise2(float(i)/span,float(j)/span, octaves=octaves, base=count), 0, 1.0, 50, 255))
-                    redColor    = int(interp(pnoise2(float(i+400)/span,float(j+400)/span,octaves=octaves, base=count), 0, 1.0, 50, 255))
-                    greenColor  = int(interp(pnoise2(float(i+200)/span,float(j+200)/span,octaves=octaves, base=count), 0, 1.0, 50, 255))
-         #           redColor   = interp(pnoise1(((float(led_index))/span, 0, 1.0, 0, 255)))
-        #            greenColor = interp(pnoise1(((float(led_index))/span, 0, 1.0, 0, 255)))
-       #             print(redColor,blueColor,greenColor)
-                    strip.setPixelColor(led_index, Color(redColor,blueColor,greenColor))
-                    
-            strip.show()
-            #time.sleep(.1)
-        reset_strip()
-        for i in range(octave):
-            strip.setPixelColor(i, Color(100,100,100))
-        strip.show()
+    img_rgb_matrix = [[]]*span 
+    for i in range(h):
+        for j in range(w):
+            led_index = (w*h)-1 - int(i*w+j)
+            if i%2 == 0:
+                j = (w-1)-j
+            y_dir, x_dir = i*mag+1, j*mag+1
+            blueColor   = int(interp(pnoise3(float(y_dir)/span, float(x_dir)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
+            redColor    = int(interp(pnoise3(float(y_dir)/span,float(x_dir)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
+            greenColor  = int(interp(pnoise3(float(y_dir+200)/span,float(x_dir+200)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
+            img_rgb_matrix[i*j] = (redColor, blueColor, greenColor)
+            strip.setPixelColor(led_index, Color(redColor, blueColor, greenColor))
+    strip.show()
 
-    print("done")
+def display_img(strip):
+    count = 0
+    while 1:
+        get_color = build_matrix(count)
+        count += timing 
+        reset_strip()
     
 # Main program logic follows:
 if __name__ == '__main__':
@@ -84,5 +81,5 @@ if __name__ == '__main__':
     strip.begin()
 
     
-    display_img(strip, img_rgb_matrix)
+    display_img(strip)
     #print(array(img))
