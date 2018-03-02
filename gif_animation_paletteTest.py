@@ -4,13 +4,15 @@ from PIL import GifImagePlugin
 from noise import pnoise1
 import os
 import time
-
 from neopixel import *
 
 import argparse
 import signal
 import sys
 
+gif_parser = argparse.ArgumentParser()
+gif_parser.add_argument("filename", help="Name of file in images/ directory.")
+args = gif_parser.parse_args()
 
 def signal_handler(signal, frame):
         colorWipe(strip, Color(0,0,0))
@@ -53,13 +55,23 @@ def sample_image(img):
                 img_x = j
                 if i%2 == 0:
                     img_x = (w-1)-j
-                img_rgb_matrix[j][i] = img[img_x,i]   # load matrix with rgb values
+                img_rgb_matrix[j][i] = img.getpixel((img_x,i))   # load matrix with rgb values
     return(img_rgb_matrix)
+
+def retrieve_gif_frame(img, palette, ind):
+    img.seek(ind)
+    img.putpalette(palette)
+    new_im = Image.new("RGBA", img.size)
+    new_im.paste(img)
+    new_im = new_im.resize((w,h), Image.ANTIALIAS)
+    new_im = new_im.rotate(-90)
+    
+    return(new_im)
 
 # Main program logic follows:
 if __name__ == '__main__':
     # Process arguments
-    opt_parse()
+    #opt_parse()
     counter = 0
     is_gif = False # Test to see if image is animated
     # Create NeoPixel object with appropriate configuration.
@@ -67,10 +79,22 @@ if __name__ == '__main__':
     # Intialize the library (must be called once before other functions).
     strip.begin()
        
-    img = Image.open("images/Kr3ACDH.jpg")# Open Image to Display
-    img = img.resize((w,h),Image.ANTIALIAS)        # Resize and downsample image to matrix dimensions
-    img.show(title="TEST")
-    img_loaded = img.load()
-    img_rgb_matrix = sample_image(img_loaded)
-    #print(img_rgb_matrix)
-    display_img(strip, img_rgb_matrix)#print(array(img)))
+    img = "images/"+sys.argv[1] 
+    
+    print("Loading image: "+img)
+    img = Image.open(img)
+    gif_palette = img.getpalette()
+    gif_stills = [[]]*img.n_frames
+    for i in range(img.n_frames):
+        gif_stills[i] = retrieve_gif_frame(img, gif_palette, i)
+
+    print("Loading complete")
+    while 1:
+        if counter <= len(gif_stills)-2:
+            counter += 1
+        else:
+           counter = 0
+        img_rgb_matrix = sample_image(gif_stills[counter])
+        #print(gif_stills[counter])
+        display_img(strip, img_rgb_matrix)
+        time.sleep(speed)
