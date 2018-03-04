@@ -43,6 +43,7 @@ y_drift = 200
 host = '127.0.0.1'
 port = 5555
 
+red_bright, blue_bright, green_bright = [x for x in [max_bright]*3]
 iCommand = []
 
 s = socket.socket()
@@ -68,13 +69,27 @@ def reset_strip():
         strip.setPixelColor(i, Color(0,0,0))
 
 def build_matrix(count, iComm):
-    global y_drift
+    global y_drift, red_bright, blue_bright, green_bright
     global iCommand # set this to clear the iCommand list after it has been used
-    try:
-        y_drift = int(iComm[0])
-        iCommand = []
-    except Exception as err:
-        pass
+    if len(iComm) > 0:
+        if iComm[0] == 'r':
+            green_bright = 0
+            red_bright= 255;
+            blue_bright = 0
+        elif iComm[0] == 'g':
+            red_bright = 0
+            green_bright = 255
+            blue_bright= 0
+        elif iComm[0] == 'b':
+            red_bright = 0
+            blue_bright = 255
+            green_bright = 0
+        else:
+            try:
+                y_drift = int(iComm[0])
+            except:
+                print("did not recognize command")
+    iCommand = []
     span = w*h
     img_rgb_matrix = [[]]*span
     for i in range(h):
@@ -86,19 +101,19 @@ def build_matrix(count, iComm):
                               float(x_dir)/span,
                               float(count),
                               octaves=octaves),
-                              0, 1.0, min_bright, max_bright))
+                              0, 1.0, min_bright, blue_bright))
 
             redColor    = int(interp(pnoise3(
                               float(y_dir+100)/span,
                               float(x_dir+100)/span,
                               float(count), octaves=octaves),
-                              0, 1.0, min_bright, max_bright))
+                              0, 1.0, min_bright, red_bright))
 
             greenColor  = int(interp(pnoise3(
                               float(y_dir+200)/span,
                               float(x_dir+200)/span,
                               float(count), octaves=octaves),
-                              0, 1.0, min_bright, max_bright))
+                              0, 1.0, min_bright, green_bright))
 
             strip.setPixelColor(led_index,
                                 Color(redColor, blueColor, greenColor))
