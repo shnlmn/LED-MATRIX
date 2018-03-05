@@ -21,7 +21,7 @@ def opt_parse():
                 signal.signal(signal.SIGINT, signal_handler)
 
 # LED strip configuration:
-LED_COUNT      = 144      # Number of LED pixels.
+LED_COUNT      = 200      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -38,6 +38,8 @@ octaves = 4
 timing = 0.002
 min_bright = 0
 max_bright = 255
+x_drift = 1000
+y_drift = 200
 
 def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
     return((((abs(val)-smin)*(tmax-tmin))/(smax-smin))+tmin)
@@ -47,27 +49,25 @@ def reset_strip():
         strip.setPixelColor(i, Color(0,0,0))
        
 def build_matrix(count):
-    span = 144 #(h*w)
+    span = w*h
     img_rgb_matrix = [[]]*span 
     for i in range(h):
         for j in range(w):
             led_index = (w*h)-1 - int(i*w+j)
-            if i%2 == 0:
-                j = (w-1)-j
-            y_dir, x_dir = i*mag+1, j*mag+1
+  	    #print(led_index)
+            y_dir, x_dir = i*mag+1+(count*y_drift), j*mag+1+(count*x_drift)
             blueColor   = int(interp(pnoise3(float(y_dir)/span, float(x_dir)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
             redColor    = int(interp(pnoise3(float(y_dir+100)/span,float(x_dir+100)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
             greenColor  = int(interp(pnoise3(float(y_dir+200)/span,float(x_dir+200)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
-            img_rgb_matrix[i*j] = (redColor, blueColor, greenColor)
             strip.setPixelColor(led_index, Color(redColor, blueColor, greenColor))
     strip.show()
 
 def display_img(strip):
     count = 0
     while 1:
-        get_color = build_matrix(count)
+        build_matrix(count)
         count += timing 
-        reset_strip()
+        #reset_strip()
     
 # Main program logic follows:
 if __name__ == '__main__':
@@ -78,8 +78,8 @@ if __name__ == '__main__':
     # Create NeoPixel object with appropriate configuration.
     strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
     # Intialize the library (must be called once before other functions).
-    strip.begin()
 
-    
+
+    strip.begin()
     display_img(strip)
-    #print(array(img))
+
