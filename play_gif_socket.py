@@ -57,8 +57,16 @@ def sample_image(img):
                 img_rgb_matrix[j][i] = img.getpixel((img_x,i))   # load matrix with rgb values
     return(img_rgb_matrix)
 
-def retrieve_gif_frame(img, palette, ind):
+def pick_gif(gif_files):
+    for ind, file in enumerate(gif_files):
+        print(str(ind)+": "+file)
+    print("Select gif to display (type number)")
+    gif_number = int(input("Select gif to display (type number):"))
+    return(gif_files[gif_number])
+
+def retrieve_gif_frame(img, ind):
     img.seek(ind)
+    palette = img.getpalette()
     img.putpalette(palette)
     new_im = Image.new("RGBA", img.size)
     new_im.paste(img)
@@ -83,34 +91,24 @@ if __name__ == '__main__':
     gif_count = 0
     
     images_loaded = [[]]*len(gif_files)
-    for ind, file in enumerate(gif_files):
-        
-        print("Loading image: "+file)
-        img = Image.open("images/"+file)
-        gif_stills = [[]]*img.n_frames
-        gif_palette = img.getpalette()
+    file = pick_gif(gif_files)
+    
+    print("Loading image: "+file)
+    img = Image.open("images/"+file)
+    gif_stills = [[]]*img.n_frames
 
-        for i in range(img.n_frames):
-            gif_stills[i] = retrieve_gif_frame(img, gif_palette, i)
+    for i in range(img.n_frames):
+        gif_stills[i] = retrieve_gif_frame(img, i)
 
-        images_loaded[ind] = gif_stills 
 
     print("Loading complete")
     while 1:
         
-        current_gif = images_loaded[gif_count]
-        print("Now Playing: "+gif_files[gif_count]) 
-        gif_count += 1
-        if gif_count > len(images_loaded)-1:
-            gif_count = 0
-        timer = time.time()
-
-        while time.time()-timer < play_time:
-            if counter <= len(current_gif)-2:
-                counter += 1
-            else:
-               counter = 0
-            img_rgb_matrix = sample_image(current_gif[counter])
-            #print(gif_stills[counter])
-            display_img(strip, img_rgb_matrix)
-            time.sleep(speed)
+        if counter <= len(gif_stills)-2:
+            counter += 1
+        else:
+           counter = 0
+        img_rgb_matrix = sample_image(gif_stills[counter])
+        #print(gif_stills[counter])
+        display_img(strip, img_rgb_matrix)
+        time.sleep(speed)

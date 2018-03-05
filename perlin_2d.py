@@ -33,9 +33,9 @@ LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
 
 w = 12 # width of pixel matrix
 h = 12 # height of pixel matrix
-mag = 10 # magnification/scale of perlin field
+mag = 5 # magnification/scale of perlin field
 octaves = 4 
-timing = 0.005
+timing = 0.002
 min_bright = 0
 max_bright = 255
 
@@ -56,7 +56,7 @@ def build_matrix(count):
                 j = (w-1)-j
             y_dir, x_dir = i*mag+1, j*mag+1
             blueColor   = int(interp(pnoise3(float(y_dir)/span, float(x_dir)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
-            redColor    = int(interp(pnoise3(float(y_dir)/span,float(x_dir)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
+            redColor    = int(interp(pnoise3(float(y_dir+100)/span,float(x_dir+100)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
             greenColor  = int(interp(pnoise3(float(y_dir+200)/span,float(x_dir+200)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
             img_rgb_matrix[i*j] = (redColor, blueColor, greenColor)
             strip.setPixelColor(led_index, Color(redColor, blueColor, greenColor))
