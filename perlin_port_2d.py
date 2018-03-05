@@ -40,7 +40,8 @@ min_bright = 0
 max_bright = 255
 x_drift = 1000
 y_drift = 200
-host = '127.0.0.1'
+host = '10.0.0.41'
+#host = '127.0.0.1'
 port = 5555
 
 red_bright, blue_bright, green_bright = [x for x in [max_bright]*3]
@@ -56,6 +57,8 @@ def listener():
         print("Connection from; "+str(addr))
         data = c.recv(1024).decode('utf-8')
         iCommand.append(data)
+        print(data)
+
         if not data:
             #print("Data applied")
             break
