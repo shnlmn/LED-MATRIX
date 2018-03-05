@@ -49,22 +49,27 @@ port = 5555
 red_bright, blue_bright, green_bright = [x for x in [max_bright]*3]
 iCommand = []
 
-s = socket.socket()
-s.bind((host, port))
-s.listen(1)
+#   s = socket.socket()
+#   s.bind((host, port))
+#   s.listen(1)
 
-def listener():
-    while True:
-        c, addr = s.accept()
-        print("Connection from; "+str(addr))
-        data = c.recv(1024).decode('utf-8')
-        iCommand.append(data)
-        print(data)
+async def listener(websocket, path):
+    command = await websocket.recv()
+    iCommand.append(command)
+    print(command)
 
-        if not data:
-            #print("Data applied")
-            break
-        c.close()
+#def listener():
+#    while True:
+#        c, addr = s.accept()
+#        print("Connection from; "+str(addr))
+#        data = c.recv(1024).decode('utf-8')
+#        iCommand.append(data)
+#        print(data)
+#
+#        if not data:
+#            #print("Data applied")
+#            break
+#        c.close()
 
 def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
     return((((abs(val)-smin)*(tmax-tmin))/(smax-smin))+tmin)
@@ -126,8 +131,6 @@ def build_matrix(count, iComm):
 
 def display_img(strip):
     count = 0
-    t = threading.Thread(target=listener)
-    t.start()
 
     while 1:
 
@@ -151,8 +154,13 @@ if __name__ == '__main__':
     # Create NeoPixel object with appropriate configuration.
     strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
     # Intialize the library (must be called once before other functions).
-
+#       t = threading.Thread(target=listener)
+#       t.start()
+    start_server = websockets.serve(listener, host, port)
+    asyncio.get_event_loop().run_until_complete(start_server)
+    asyncio.get_event_loop().run_forever()
 
     strip.begin()
     display_img(strip)
+
 
