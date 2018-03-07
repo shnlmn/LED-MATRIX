@@ -42,8 +42,8 @@ min_bright = 0
 max_bright = 255
 x_drift = 1000
 y_drift = 200
-host = '10.0.0.41'
-#host = '127.0.0.1'
+#host = '10.0.0.41'
+host = '192.168.254.81'
 port = 5555
 
 red_bright, blue_bright, green_bright = [x for x in [max_bright]*3]

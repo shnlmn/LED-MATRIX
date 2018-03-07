@@ -26,7 +26,7 @@ def opt_parse():
                 signal.signal(signal.SIGINT, signal_handler)
 
 # LED strip configuration:
-LED_COUNT      = 144    # Number of LED pixels.
+LED_COUNT      = 192    # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -38,7 +38,7 @@ LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
 
 speed = .05 # frame time for gif animation
 w = 12 # width of pixel matrix
-h = 12 # height of pixel matrix
+h = 16  # height of pixel matrix
 img_rgb_matrix = [[[] for x in range(h)] for y in range(w)] # construct matrix to hold rgb vals
 
 def display_img(strip, matrix):
@@ -64,9 +64,9 @@ def retrieve_gif_frame(img, ind):
     img.putpalette(palette)
     new_im = Image.new("RGBA", img.size)
     new_im.paste(img)
-    new_im = new_im.resize((w,h), Image.ANTIALIAS)
+    new_im = new_im.resize((h,h), Image.ANTIALIAS)
     new_im = new_im.rotate(-90)
-    
+
     return(new_im)
 
 # Main program logic follows:
@@ -79,9 +79,9 @@ if __name__ == '__main__':
     strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
     # Intialize the library (must be called once before other functions).
     strip.begin()
-       
-    img = "images/"+sys.argv[1] 
-    
+
+    img = "images/"+sys.argv[1]
+
     print("Loading image: "+img)
     img = Image.open(img)
     #gif_palette = img.getpalette()
