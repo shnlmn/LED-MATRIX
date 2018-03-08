@@ -39,8 +39,11 @@ timing = 0.002
 min_bright = 50
 max_bright = 255
 x_drift = 0
-y_drift = 0
-
+y_drift = 1000
+x_stretch = 5
+y_stretch = 1
+red_offset = 1000
+green_offset = 100
 def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
     return((((abs(val)-smin)*(tmax-tmin))/(smax-smin))+tmin)
 
@@ -57,11 +60,30 @@ def build_matrix(count):
 
             if i%2 == 0:
                 j = (w-1)-j
+            y,x = i*y_stretch, j*x_stretch
   	    #print(led_index)
-            y_dir, x_dir = i*mag+1+(count*y_drift), j*mag+1+(count*x_drift)
-            blueColor   = int(interp(pnoise3(float(y_dir)/span, float(x_dir)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
-            redColor    = int(interp(pnoise3(float(y_dir+100)/span,float(x_dir+100)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
-            greenColor  = int(interp(pnoise3(float(y_dir+200)/span,float(x_dir+200)/span, float(count), octaves=octaves), 0, 1.0, min_bright, max_bright))
+            y_dir, x_dir = y*mag+1+(count*y_drift), x*mag+1+(count*x_drift)
+            blueColor   = int(interp(
+                            pnoise3(
+                                float(y_dir)/span,
+                                float(x_dir)/span,
+                                float(count),
+                                octaves=octaves),
+                            0, 1.0, min_bright, max_bright))
+            redColor    = int(interp(
+                            pnoise3(
+                                float(y_dir+red_offset)/span,
+                                float(x_dir+red_offset)/span,
+                                float(count),
+                                octaves=octaves),
+                            0, 1.0, min_bright, max_bright))
+            greenColor  = int(interp(
+                            pnoise3(float(y_dir+green_offset)/span,
+                                float(x_dir+green_offset)/span,
+                                float(count),
+                                octaves=octaves),
+                            0, 1.0, min_bright, max_bright))
+
             strip.setPixelColor(led_index, Color(redColor, blueColor, greenColor))
     strip.show()
 

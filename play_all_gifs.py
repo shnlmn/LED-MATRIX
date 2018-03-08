@@ -37,7 +37,7 @@ LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
 speed = .05 # frame time for gif animation
 w = 12 # width of pixel matrix
 h = 16  # height of pixel matrix
-play_time = 30
+play_time = 8
 img_rgb_matrix = [[[] for x in range(h)] for y in range(w)] # construct matrix to hold rgb vals
 
 def display_img(strip, matrix):
