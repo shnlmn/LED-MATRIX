@@ -1,14 +1,23 @@
 from numpy import *
 from PIL import Image
 from noise import pnoise3
-
+from flask import Flask
 import time
+import threading
 
 from neopixel import *
 
 import argparse
 import signal
 import sys
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    #Main()
+    return("hello Flask world")
+
 def signal_handler(signal, frame):
         colorWipe(strip, Color(0,0,0))
         sys.exit(0)
@@ -95,17 +104,21 @@ def display_img(strip):
         count += timing
         #reset_strip()
 
-# Main program logic follows:
-if __name__ == '__main__':
+def Main():
     # Process arguments
     opt_parse()
     counter = 0
-
+    global strip
     # Create NeoPixel object with appropriate configuration.
     strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
     # Intialize the library (must be called once before other functions).
 
-
+    print("MAIN IS HAPPENING")
     strip.begin()
     display_img(strip)
 
+
+# Main program logic follows:
+if __name__ == '__main__':
+    Main()
+    app.run(host='0.0.0.0')
