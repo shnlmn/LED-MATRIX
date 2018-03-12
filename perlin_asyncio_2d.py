@@ -25,7 +25,7 @@ def opt_parse():
         signal.signal(signal.SIGINT, signal_handler)
 
 # LED strip configuration:
-LED_COUNT      = 200      # Number of LED pixels.
+LED_COUNT      = 150      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -35,50 +35,53 @@ LED_INVERT     = False   # True to invert the signal (when using NPN transistor 
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
 
-h = 5 # height of pixel matrix
-w = int(200/h) # width of pixel matrix
-mag = 5 # magnification/scale of perlin field
-octaves = 2
-timing = 0.005
-min_bright = 0
-max_bright = 255
-x_drift = 1000
-y_drift = 200
+h = 1 # height of pixel matrix
+w = int(LED_COUNT/h) # width of pixel matrix
 host = '10.0.0.41'
+led_vars = {
+        "mag":4,
+        "timing":0.002,
+        "min_bright":50,
+        "max_bright":255,
+        "x_drift":0,
+        "y_drift":1000,
+        'x_stretch':5,
+        'y_stretch':1,
+        'red_offset' : 1000,
+        'green_offset' : 100
+        }
+#mag = 5 # magnification/scale of perlin field
+#octaves = 4
+#timing = 0.002
+#min_bright = 50
+#max_bright = 255
+#x_drift = 0
+#y_drift = 1000
+#x_stretch = 5
+#y_stretch = 1
+#red_offset = 1000
+#green_offset = 100
 #host = '127.0.0.1'
 port = 5555
 
-red_bright, blue_bright, green_bright = [x for x in [max_bright]*3]
-iCommand = []
+red_bright, blue_bright, green_bright = [x for x in [led_vars['max_bright']]*3]
 
-class LED_Server(asyncio.Protocol):
+async def listen(websocket, path):
+    global led_vars
+    command, value = await websocket.recv().split(":")
+    led_vars[command] = float(value)
+    print("< {}:{}".format(command, value))
 
-def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
-    return((((abs(val)-smin)*(tmax-tmin))/(smax-smin))+tmin)
 
+async def build_matrix(count,mag=1, octaves=1,timing=0.001, min_bright=0, max_bright=255, x_drift=0,
+                        y_drift = 1000, x_stretch=1, y_stretch=1, red_offset=100, green_offset=200):
+    await asyncio.sleep(0)
+    global led_vars
 
-def build_matrix(count, iComm):
-    global y_drift, red_bright, blue_bright, green_bright
-    global iCommand # set this to clear the iCommand list after it has been used
-    if len(iComm) > 0:
-        if iComm[0] == 'r':
-            green_bright = 0
-            red_bright= 255;
-            blue_bright = 0
-        elif iComm[0] == 'g':
-            red_bright = 0
-            green_bright = 255
-            blue_bright= 0
-        elif iComm[0] == 'b':
-            red_bright = 0
-            blue_bright = 255
-            green_bright = 0
-        else:
-            try:
-                y_drift = int(iComm[0])
-            except:
-                print("did not recognize command")
-    iCommand = []
+    def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
+        return((((abs(val)-smin)*(tmax-tmin))/(smax-smin))+tmin)
+
+    global red_bright, blue_bright, green_bright
     span = w*h
     img_rgb_matrix = [[]]*span
     for i in range(h):
@@ -111,10 +114,8 @@ def build_matrix(count, iComm):
 async def display_img(strip):
     count = 0
     while 1:
-        await asyncio.sleep(0)
-        build_matrix(count, iCommand)
-        count += timing
-    c.close()
+        await build_matrix(count, **led_vars)
+        count += led_vars['timing']
 
 # Main program logic follows:
 if __name__ == '__main__':
@@ -123,8 +124,17 @@ if __name__ == '__main__':
     # Create NeoPixel object with appropriate configuration.
     strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
     # Intialize the library (must be called once before other functions).
-
-    loop = asyncio.get_event_loop()
     strip.begin()
-    display_img(strip)
 
+    start_server = websockets.serve(listen, '10.0.0.41', 5555)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(asyncio.gather(start_server, display_img(strip)))
+    #print('Serving on {}.'.format(server.sockets[0].getsockname()))
+    print(dir(start_server))
+
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+
+    loop.close()
