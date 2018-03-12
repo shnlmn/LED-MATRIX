@@ -31,17 +31,32 @@ LED_INVERT     = False   # True to invert the signal (when using NPN transistor 
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
 
-w = 144 # width of pixel matrix
-h = int(LED_COUNT/w) # height of pixel matrix
-img_rgb_matrix = [[[] for x in range(h)] for y in range(w)] # construct matrix to hold rgb vals
+# w = 144 # width of pixel matrix
+# h = int(LED_COUNT/w) # height of pixel matrix
+# img_rgb_matrix = [[[] for x in range(h)] for y in range(w)] # construct matrix to hold rgb vals
+#
+# def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
+w = 12 # width of pixel matrix
+h = 16 # height of pixel matrix
+mag = 5 # magnification/scale of perlin field
+octaves = 4
+timing = 0.002
+min_bright = 0
+max_bright = 255
+x_drift = 0
+y_drift = 1000
+x_stretch = 5
+y_stretch = 1
+red_offset = 1000
+green_offset = 100
 
-def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
+def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0, power=1):
     return((((abs(val)-smin)*(tmax-tmin))/(smax-smin))+tmin)
 
 def reset_strip():
     for i in range(LED_COUNT):
         strip.setPixelColor(i, Color(0,0,0))
-        
+
 def display_img(strip, matrix, iterations=3000000):
     octaves = 4
 
@@ -62,7 +77,7 @@ def display_img(strip, matrix, iterations=3000000):
         #            greenColor = interp(pnoise1(((float(led_index))/span, 0, 1.0, 0, 255)))
        #             print(redColor,blueColor,greenColor)
                     strip.setPixelColor(led_index, Color(redColor,blueColor,greenColor))
-                    
+
             strip.show()
             #time.sleep(.1)
         reset_strip()
@@ -71,7 +86,7 @@ def display_img(strip, matrix, iterations=3000000):
         strip.show()
 
     print("done")
-    
+
 # Main program logic follows:
 if __name__ == '__main__':
     # Process arguments
@@ -83,6 +98,6 @@ if __name__ == '__main__':
     # Intialize the library (must be called once before other functions).
     strip.begin()
 
-    
+
     display_img(strip, img_rgb_matrix)
     #print(array(img))
