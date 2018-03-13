@@ -37,7 +37,7 @@ LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
 
 h = 1 # height of pixel matrix
 w = int(LED_COUNT/h) # width of pixel matrix
-host = '10.0.0.41'
+host = '127.0.0.1'
 led_vars = {
         "mag":4,
         "timing":0.002,
@@ -68,9 +68,8 @@ red_bright, blue_bright, green_bright = [x for x in [led_vars['max_bright']]*3]
 
 async def listen(websocket, path):
     global led_vars
-    data = await websocket.recv()
-    print(data, "DATA")
-    command, value = data.split(":")
+    received = await websocket.recv()
+    command, value = received.split(":")
     led_vars[command] = float(value)
     print("< {}:{}".format(command, value))
 
@@ -95,19 +94,19 @@ async def build_matrix(count,mag=1, octaves=1,timing=0.001, min_bright=0, max_br
                               float(x_dir)/span,
                               float(count),
                               octaves=octaves),
-                              0, 1.0, min_bright, blue_bright))
+                              0, 1.0, min_bright, max_bright))
 
             redColor    = int(interp(pnoise3(
-                              float(y_dir+100)/span,
-                              float(x_dir+100)/span,
+                              float(y_dir+red_offset)/span,
+                              float(x_dir+red_offset)/span,
                               float(count), octaves=octaves),
-                              0, 1.0, min_bright, red_bright))
+                              0, 1.0, min_bright, max_bright))
 
             greenColor  = int(interp(pnoise3(
-                              float(y_dir+200)/span,
-                              float(x_dir+200)/span,
+                              float(y_dir+green_offset)/span,
+                              float(x_dir+green_offset)/span,
                               float(count), octaves=octaves),
-                              0, 1.0, min_bright, green_bright))
+                              0, 1.0, min_bright, max_bright))
 
             strip.setPixelColor(led_index,
                                 Color(redColor, blueColor, greenColor))
