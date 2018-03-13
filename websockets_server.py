@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pyth
 
 import asyncio
 import datetime
@@ -10,7 +10,7 @@ async def time(websocket, path):
     print("< {}".format(name))
 
 
-start_server = websockets.serve(time, '10.0.0.41', 5555)
+start_server = websockets.serve(time, '127.0.0.1', 5555)
 
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
