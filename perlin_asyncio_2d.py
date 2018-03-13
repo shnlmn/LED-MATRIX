@@ -68,7 +68,9 @@ red_bright, blue_bright, green_bright = [x for x in [led_vars['max_bright']]*3]
 
 async def listen(websocket, path):
     global led_vars
-    command, value = await websocket.recv().split(":")
+    data = await websocket.recv()
+    print(data, "DATA")
+    command, value = data.split(":")
     led_vars[command] = float(value)
     print("< {}:{}".format(command, value))
 
@@ -126,7 +128,7 @@ if __name__ == '__main__':
     # Intialize the library (must be called once before other functions).
     strip.begin()
 
-    start_server = websockets.serve(listen, '10.0.0.41', 5555)
+    start_server = websockets.serve(listen, '192.168.254.81', 5555)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(asyncio.gather(start_server, display_img(strip)))
     #print('Serving on {}.'.format(server.sockets[0].getsockname()))
