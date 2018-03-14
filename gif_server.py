@@ -36,7 +36,7 @@ LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
-
+counter = 0
 speed = .05 # frame time for gif animation
 w = 12 # width of pixel matrix
 h = 16  # height of pixel matrix
@@ -44,7 +44,7 @@ img_rgb_matrix = [[[] for x in range(h)] for y in range(w)] # construct matrix t
 
 async def listen(websocket, path):
     received = await websocket.recv()
-    choose_gif(received)
+    await choose_gif(received)
 
 async def display_img(strip, matrix):
     for i in range(h):
@@ -69,34 +69,36 @@ async def retrieve_gif_frame(img, ind):
     img.putpalette(palette)
     new_im = Image.new("RGBA", img.size)
     new_im.paste(img)
-    new_im = new_im.resize((h,h), Image.ANTIALIAS)
     new_im = new_im.rotate(-90)
+    new_im = new_im.resize((w,h), Image.ANTIALIAS)
     return(new_im)
 
 async def choose_gif(path):
 
     img = "images/"+path
-
+    global gif_stills
     print("Loading image: "+img)
     img = Image.open(img)
     #gif_palette = img.getpalette()
     gif_stills = [[]]*img.n_frames
     for i in range(img.n_frames):
-        gif_stills[i] = retrieve_gif_frame(img, i)
+        gif_stills[i] = await retrieve_gif_frame(img, i)
 
     print("Loading complete")
-    play_gif(gif_stills)
+    await play_gif(gif_stills)
 
 async def play_gif(gif):
     while 1:
+        global gif_stills
+        global counter 
         await asyncio.sleep(0)
         if counter <= len(gif_stills)-2:
             counter += 1
         else:
            counter = 0
-        img_rgb_matrix = sample_image(gif_stills[counter])
+        img_rgb_matrix = await sample_image(gif_stills[counter])
         #print(gif_stills[counter])
-        display_img(strip, img_rgb_matrix)
+        await display_img(strip, img_rgb_matrix)
         time.sleep(speed)
 
 # Main program logic follows:
@@ -106,7 +108,7 @@ if __name__ == '__main__':
     # Intialize the library (must be called once before other functions).
     strip.begin()
 
-    start_server = websockets.serve(listen, '127.0.0.1', 5555)
+    start_server = websockets.serve(listen, '192.168.254.81', 5555)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(asyncio.gather(start_server, choose_gif(sys.argv[1])))
 #    print('Serving on {}.'.format(
