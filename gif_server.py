@@ -36,16 +36,20 @@ LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
+
+# variables
+host = '127.0.0.1' # since the webpage is served from the Pi, this can be localhost
 counter = 0
 speed = .05 # frame time for gif animation
 w = 12 # width of pixel matrix
 h = 16  # height of pixel matrix
-img_rgb_matrix = [[[] for x in range(h)] for y in range(w)] # construct matrix to hold rgb vals
 
+# Listen for communication across websocket
 async def listen(websocket, path):
     received = await websocket.recv()
-    await choose_gif(received)
+    choose_gif(received)
 
+# Push frame to LED strip
 async def display_img(strip, matrix):
     for i in range(h):
         for j in range(w):
@@ -54,7 +58,9 @@ async def display_img(strip, matrix):
             strip.setPixelColor(led_index, Color(*color))
     strip.show()
 
+# take a frame of the gif, evaluate the color and add it to img_rgb_matrix[]
 async def sample_image(img):
+    img_rgb_matrix = [[[] for x in range(h)] for y in range(w)] # construct matrix to hold rgb vals
     for i in range(h):                               #iterate through rows
             for j in range(w):                           # iterate through columns
                 img_x = j
@@ -63,6 +69,7 @@ async def sample_image(img):
                 img_rgb_matrix[j][i] = img.getpixel((img_x,i))   # load matrix with rgb values
     return(img_rgb_matrix)
 
+# Process the gif and store the frames in a list
 async def retrieve_gif_frame(img, ind):
     img.seek(ind)
     palette = img.getpalette()
@@ -73,31 +80,26 @@ async def retrieve_gif_frame(img, ind):
     new_im = new_im.resize((w,h), Image.ANTIALIAS)
     return(new_im)
 
+# take the passed filename and prepare it for display
 async def choose_gif(path):
-
     img = "images/"+path
-    global gif_stills
     print("Loading image: "+img)
     img = Image.open(img)
-    #gif_palette = img.getpalette()
-    gif_stills = [[]]*img.n_frames
+    stills_matrix = [[]]*img.n_frames
     for i in range(img.n_frames):
-        gif_stills[i] = await retrieve_gif_frame(img, i)
-
+        stills_matrix[i] = await sample_image(retrieve_gif_frame(img, i))
     print("Loading complete")
-    await play_gif(gif_stills)
+    await play_gif(stills_matrix)
 
-async def play_gif(gif):
+async def play_gif(stills_matrix):
     while 1:
-        global gif_stills
-        global counter 
+        global counter
         await asyncio.sleep(0)
         if counter <= len(gif_stills)-2:
             counter += 1
         else:
            counter = 0
-        img_rgb_matrix = await sample_image(gif_stills[counter])
-        #print(gif_stills[counter])
+        img_rgb_matrix = await display_matrix(stills_matrix)
         await display_img(strip, img_rgb_matrix)
         time.sleep(speed)
 
@@ -108,11 +110,9 @@ if __name__ == '__main__':
     # Intialize the library (must be called once before other functions).
     strip.begin()
 
-    start_server = websockets.serve(listen, '192.168.254.81', 5555)
+    start_server = websockets.serve(listen, host, 5555)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(asyncio.gather(start_server, choose_gif(sys.argv[1])))
-#    print('Serving on {}.'.format(
-    print(start_server)
 
     try:
         loop.run_forever()
