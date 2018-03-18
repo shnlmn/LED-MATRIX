@@ -33,22 +33,27 @@ LED_DMA        = 10   # DMA channel to use for generating signal (try 10)
 LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
-LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
+LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
 
 h = 1 # height of pixel matrix
 w = int(LED_COUNT/h) # width of pixel matrix
 host = '127.0.0.1'
 led_vars = {
         "mag":4,
+        "octaves": 2,
         "timing":0.002,
-        "min_bright":50,
-        "max_bright":255,
+        "min_bright":1.0,
+        "max_bright":1.0,
         "x_drift":0,
         "y_drift":1000,
-        'x_stretch':5,
+        'x_stretch':1,
         'y_stretch':1,
+        'blue_offset' : 1000,
         'red_offset' : 1000,
-        'green_offset' : 100
+        'green_offset' : 100,
+        'red_bright' : 255,
+        'blue_bright' : 255,
+        'green_bright' :255
         }
 #mag = 5 # magnification/scale of perlin field
 #octaves = 4
@@ -64,7 +69,6 @@ led_vars = {
 #host = '127.0.0.1'
 port = 5555
 
-red_bright, blue_bright, green_bright = [x for x in [led_vars['max_bright']]*3]
 
 async def listen(websocket, path):
     global led_vars
@@ -74,15 +78,16 @@ async def listen(websocket, path):
     print("< {}:{}".format(command, value))
 
 
-async def build_matrix(count,mag=1, octaves=1,timing=0.001, min_bright=0, max_bright=255, x_drift=0,
-                        y_drift = 1000, x_stretch=1, y_stretch=1, red_offset=100, green_offset=200):
+async def build_matrix(count,red_bright, blue_bright, green_bright, mag, octaves,timing, min_bright, max_bright, x_drift,
+                        y_drift, x_stretch, y_stretch, red_offset, green_offset, blue_offset):
     await asyncio.sleep(0)
     global led_vars
 
     def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
+        if (tmin > tmax):
+            tmin = tmax
         return((((abs(val)-smin)*(tmax-tmin))/(smax-smin))+tmin)
 
-    global red_bright, blue_bright, green_bright
     span = w*h
     img_rgb_matrix = [[]]*span
     for i in range(h):
@@ -94,22 +99,22 @@ async def build_matrix(count,mag=1, octaves=1,timing=0.001, min_bright=0, max_br
                               float(x_dir)/span,
                               float(count),
                               octaves=octaves),
-                              0, 1.0, min_bright, max_bright))
+                              0, 1.0, min_bright*255, blue_bright*max_bright))
 
             redColor    = int(interp(pnoise3(
                               float(y_dir+red_offset)/span,
                               float(x_dir+red_offset)/span,
                               float(count), octaves=octaves),
-                              0, 1.0, min_bright, max_bright))
+                              0, 1.0, min_bright*255, red_bright*max_bright))
 
             greenColor  = int(interp(pnoise3(
                               float(y_dir+green_offset)/span,
                               float(x_dir+green_offset)/span,
                               float(count), octaves=octaves),
-                              0, 1.0, min_bright, max_bright))
+                              0, 1.0, min_bright*255, green_bright*max_bright))
 
             strip.setPixelColor(led_index,
-                                Color(redColor, blueColor, greenColor))
+                                Color(redColor, greenColor, blueColor ))
     strip.show()
 
 async def display_img(strip):
