@@ -1,6 +1,6 @@
 from numpy import *
 from PIL import Image
-from noise import pnoise2
+from noise import pnoise3
 
 import time
 
@@ -33,19 +33,18 @@ LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
 
 # w = 144 # width of pixel matrix
 # h = int(LED_COUNT/w) # height of pixel matrix
-# img_rgb_matrix = [[[] for x in range(h)] for y in range(w)] # construct matrix to hold rgb vals
 #
 # def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
 w = 12 # width of pixel matrix
 h = 16 # height of pixel matrix
-mag = 5 # magnification/scale of perlin field
-octaves = 4
-timing = 0.002
+mag = 10 # magnification/scale of perlin field
+octaves = 2
+timing = 0.001
 min_bright = 0
 max_bright = 255
 x_drift = 0
 y_drift = 1000
-x_stretch = 5
+x_stretch = 1
 y_stretch = 1
 red_offset = 1000
 green_offset = 100
@@ -57,47 +56,50 @@ def reset_strip():
     for i in range(LED_COUNT):
         strip.setPixelColor(i, Color(0,0,0))
 
-def display_img(strip, matrix, iterations=3000000):
-    octaves = 4
+def display_img(count, strip):
+    span = w*h
+    img_rgb_matrix = [[]] *span # construct matrix to hold rgb vals
+    for i in range(h):
+        for j in range(w):
+            led_index = LED_COUNT - int(i*w+j) -1
+            y_dir, x_dir = i * mag + 1 + (count * y_drift), j * mag + 1 + (count * x_drift)
+            blueColor   = int(interp(pnoise3(
+                              float(y_dir)/span,
+                              float(x_dir)/span,
+                              float(count),
+                              octaves=octaves),
+                              0, 1.0, 50, 255))
 
-    span = 144 #(h*w)
-    for octave in range(1,octaves):
-        for count in range(iterations):
-            for i in range(h):
-                for j in range(w):
-                    led_index = LED_COUNT - int(i*w+j) -1
-                    position = led_index/LED_COUNT
-        #            blueColor = (float(led_index)/span)
-         #           redColor = (float(led_index)/span)
-              #      blueColor   = interp(led_index, 0,50,0,255)
-                    blueColor   = int(interp(pnoise2(float(i)/span,float(j)/span, octaves=octaves, base=count), 0, 1.0, 50, 255))
-                    redColor    = int(interp(pnoise2(float(i+400)/span,float(j+400)/span,octaves=octaves, base=count), 0, 1.0, 50, 255))
-                    greenColor  = int(interp(pnoise2(float(i+200)/span,float(j+200)/span,octaves=octaves, base=count), 0, 1.0, 50, 255))
-         #           redColor   = interp(pnoise1(((float(led_index))/span, 0, 1.0, 0, 255)))
-        #            greenColor = interp(pnoise1(((float(led_index))/span, 0, 1.0, 0, 255)))
-       #             print(redColor,blueColor,greenColor)
-                    strip.setPixelColor(led_index, Color(redColor,blueColor,greenColor))
+            redColor    = int(interp(pnoise3(
+                              float(y_dir+400)/span,
+                              float(x_dir+400)/span,
+                              float(count),
+                              octaves=octaves),
+                              0, 1.0, 50, 255))
 
-            strip.show()
-            #time.sleep(.1)
-        reset_strip()
-        for i in range(octave):
-            strip.setPixelColor(i, Color(100,100,100))
-        strip.show()
+            greenColor  = int(interp(pnoise3(
+                              float(y_dir+200)/span,
+                              float(x_dir+200)/span,
+                              float(count),
+                              octaves=octaves),
+                              0, 1.0, 50, 255))
 
-    print("done")
+            strip.setPixelColor(led_index, Color(redColor,blueColor,greenColor))
+
+    strip.show()
 
 # Main program logic follows:
 if __name__ == '__main__':
     # Process arguments
     opt_parse()
-    counter = 0
+    count = 0
 
     # Create NeoPixel object with appropriate configuration.
     strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
     # Intialize the library (must be called once before other functions).
     strip.begin()
 
-
-    display_img(strip, img_rgb_matrix)
+    while True:
+        display_img(count, strip)
+        count += timing
     #print(array(img))
