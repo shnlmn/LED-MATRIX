@@ -25,7 +25,7 @@ def opt_parse():
         signal.signal(signal.SIGINT, signal_handler)
 
 # LED strip configuration:
-LED_COUNT      = 150      # Number of LED pixels.
+LED_COUNT      = 25 # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -35,17 +35,17 @@ LED_INVERT     = False   # True to invert the signal (when using NPN transistor 
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
 
-h = 1 # height of pixel matrix
-w = int(LED_COUNT/h) # width of pixel matrix
+h = 5 # height of pixel matrix
+w = int(LED_COUNT/h)  # width of pixel matrix
 host = '10.0.0.41'
 led_vars = {
-        "mag":4,
+        "mag":1,
         "octaves": 2,
-        "timing":0.002,
-        "min_bright":1.0,
+        "timing":0.0015,
+        "min_bright":0,
         "max_bright":1.0,
         "x_drift":0,
-        "y_drift":1000,
+        "y_drift":10,
         'x_stretch':1,
         'y_stretch':1,
         'blue_offset' : 1000,
@@ -79,6 +79,8 @@ async def build_matrix(count,red_bright, blue_bright, green_bright, mag, octaves
     for i in range(h):
         for j in range(w):
             led_index = (w*h)-1 - int(i*w+j)
+            if i%2 == 0:
+                j = (w-1)-j
             y_dir, x_dir = i*mag+1+(count*y_drift), j*mag+1+(count*x_drift)
             blueColor   = int(interp(pnoise3(
                               float(y_dir)/span,
