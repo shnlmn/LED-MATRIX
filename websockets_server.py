@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pyth
 
 import asyncio
 import datetime
