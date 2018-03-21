@@ -1,3 +1,4 @@
+import pickle
 from numpy import *
 from PIL import Image
 from PIL import GifImagePlugin
@@ -5,7 +6,7 @@ from noise import pnoise1
 import os
 import time
 import cv2
-from neopixel import *
+import socket
 
 import argparse
 import signal
@@ -32,16 +33,30 @@ LED_DMA        = 10   # DMA channel to use for generating signal (try 10)
 LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
-LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
+#LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
 
-speed = .05 # frame time for gif animation
+host = 'localhost'
+port = 5050
+isock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+isock.bind((host, port))
+try:
+   isock.listen(1)
+   conn, addr = isock.accept()
+   message = []
+   while True:
+       dim = conn.recv(1024)
+       if not dim:
+           break
+       else:
+           message.append(dim)
+except:
+    print("Could not establish connection: ")
+message = pickle.loads(message[0])
+print(message)
 w = 12 # width of pixel matrix
 h = 16   # height of pixel matrix
 img_rgb_matrix = [[[] for x in range(h)] for y in range(w)] # construct matrix to hold rgb vals
 
-image_name = sys.argv[1]
-
-print(image_name)
 
 def display_img(strip, matrix):
 
@@ -53,8 +68,8 @@ def display_img(strip, matrix):
             for j in range(w):
                 led_index = (w*h)- 1 - int(i*w+j)
                 color = frame[i,j]
-                strip.setPixelColor(led_index, Color(*color))
-    strip.show()
+#                strip.setPixelColor(led_index, Color(*color))
+#    strip.show()
 
 def sample_image(img):
     for i in range(h):                               #iterate through rows
@@ -67,20 +82,9 @@ def sample_image(img):
 
 # Main program logic follows:
 if __name__ == '__main__':
-    # Process arguments
-    #opt_parse()
-    counter = 0
-    is_gif = False # Test to see if image is animated
     # Create NeoPixel object with appropriate configuration.
-    strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
+#    strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
     # Intialize the library (must be called once before other functions).
-    strip.begin()
-
-    img = Image.open("images/"+image_name)# Open Image to Display
-    img = img.resize((w,h),Image.ANTIALIAS)        # Resize and downsample image to matrix dimensions
-    img = img.rotate(-90)
-    img.show(title="TEST")
-    img_loaded = img.load()
-    img_rgb_matrix = sample_image(img_loaded)
-    #print(img_rgb_matrix)
-    display_img(strip, img_rgb_matrix)#print(array(img)))
+#    strip.begin()
+    print("at least it ran")
+    # display_img(strip, img_rgb_matrix)#print(array(img)))
