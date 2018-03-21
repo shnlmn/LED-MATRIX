@@ -31,6 +31,6 @@ if __name__ == "__main__":
             sys.stdout.flush()
             time.sleep(.5)
             count += 1
-        print(interrupt.decode('utf-8'), "INTERRUPTION")
+        print(interrupt[0], "INTERRUPTION")
         time.sleep(2)
         interrupt = []
