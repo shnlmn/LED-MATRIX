@@ -24,8 +24,15 @@ def opt_parse():
     if args.c:
         signal.signal(signal.SIGINT, signal_handler)
 
+def get_ip():
+    ts = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    ts.connect(("8.8.8.8", 80))
+    ip_ = ts.getsockname()[0]
+    ts.close()
+    return(ip_)
+
 # LED strip configuration:
-LED_COUNT      = 150      # Number of LED pixels.
+LED_COUNT      = 12*16      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -35,19 +42,19 @@ LED_INVERT     = False   # True to invert the signal (when using NPN transistor 
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
 
-h = 1 # height of pixel matrix
+h = 12 # height of pixel matrix
 w = int(LED_COUNT/h) # width of pixel matrix
-host = '10.0.0.41'
+host = get_ip() 
 led_vars = {
-        "mag":4,
+        "mag":8,
         "octaves": 2,
         "timing":0.002,
-        "min_bright":1.0,
+        "min_bright": 0,
         "max_bright":1.0,
         "x_drift":0,
         "y_drift":1000,
         'x_stretch':1,
-        'y_stretch':1,
+        'y_stretch':3,
         'blue_offset' : 1000,
         'red_offset' : 1000,
         'green_offset' : 100,
@@ -81,8 +88,8 @@ async def build_matrix(count,red_bright, blue_bright, green_bright, mag, octaves
             led_index = (w*h)-1 - int(i*w+j)
             y_dir, x_dir = i*mag+1+(count*y_drift), j*mag+1+(count*x_drift)
             blueColor   = int(interp(pnoise3(
-                              float(y_dir)/span,
-                              float(x_dir)/span,
+                              float(y_dir+blue_offset)/span,
+                              float(x_dir+blue_offset)/span,
                               float(count),
                               octaves=octaves),
                               0, 1.0, min_bright*255, blue_bright*max_bright))
