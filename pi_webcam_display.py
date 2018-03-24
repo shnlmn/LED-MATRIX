@@ -1,19 +1,25 @@
+import pickle
 from numpy import *
-import numpy as np
-from imutils.video import FileVideoStream
-from imutils.video import FPS 
 import os
 import time
 import cv2
 import socket
 from neopixel import *
 import sys
-import pafy
-import argparse
 
-ap = argparse.ArgumentParser()
-ap.add_argument("-v", "--video", required=True, help="path to input video file")
-args = vars(ap.parse_args())
+
+def signal_handler(signal, frame):
+        colorWipe(strip, Color(0,0,0))
+        sys.exit(0)
+
+
+def adjust_gamma(image, gamma=1.0):
+
+   invGamma = 1.0 / gamma
+   table = np.array([((i / 255.0) ** invGamma) * 255
+      for i in np.arange(0, 256)]).astype("uint8")
+
+   return cv2.LUT(image, table)
 
 w = 16 # width of pixel matrix
 h = 12 # height of pixel matrix
@@ -30,29 +36,13 @@ LED_INVERT     = False   # True to invert the signal (when using NPN transistor 
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP      = ws.WS2811_STRIP_BGR # Strip type and colour ordering
 
-myvid = pafy.new(args['video'])
-#best = myvid.getbestvideo(preftype="any")
-streams = myvid.streams
-stream = streams[1].url
-print(streams[1].title)
-cap = FileVideoStream(stream).start()
-time.sleep(1)
-#cap = cv2.VideoCapture(stream)
-# while True:
-#     ret, frame = cap.read()
-# 
-# #    cv2.imshow('frame', frame)
-#     k = cv2.waitKey(100) & 0xff
-#     if k == 27:
-#         break
-# 
-# cap.release()
-# cv2.destroyAllWindows()
+cap = cv2.VideoCapture(0)
+
 def display_img(strip):
     print("Diplaying image")
-    while cap.more():
-        frame = cap.read()
-        frame = cv2.resize(frame, (w, h), cv2.INTER_LINEAR)
+    while True:
+        ret, frame = cap.read()
+        frame = cv2.resize(frame, (w, h), cv2.INTER_AREA)
         vals = frame.tolist()
         for j in range(h):
             for i in range(w):
@@ -74,4 +64,6 @@ if __name__ == '__main__':
     strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
     # Intialize the library (must be called once before other functions).
     strip.begin()
+    print("at least it ran")
     display_img(strip)
+    #print(array(img)))
