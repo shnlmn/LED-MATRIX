@@ -4,12 +4,13 @@ from imutils.video import WebcamVideoStream
 from imutils.video import FPS
 import imutils
 import cv2
+import websocket
 import numpy as np
 import pafy
 
 w = 16 # width of pixel matrix
 h = 12 # height of pixel matrix
-
+host = "ws://192.168.254.81:5555"
 
 def adjust_gamma(image, gamma=1.0):
     # build a lookup table mapping the pixel values [0, 255] to
@@ -21,45 +22,46 @@ def adjust_gamma(image, gamma=1.0):
     # apply gamma correction using the lookup table
     return cv2.LUT(image, table)
 
-myvid = pafy.new("https://youtu.be/tKmqyF25WlI")
-# myvid = pafy.new("https://youtu.be/gGokmurmJic")
-streams = myvid.streams
 stream = 0
-print(streams[1].title)
+vector1d = 0
+new_pos = 0
+max_pixels = 640*480
 
 def threaded():
+    kernel = np.ones((5,5), np.uint8)
+    global vector1d
+    global new_pos
     cap = WebcamVideoStream(stream).start()
-    fps = FPS().start()
+    fgbg = cv2.createBackgroundSubtractorMOG2()
     print("Diplaying image")
+
     while True:
         frame = cap.read()
+        fgmask = fgbg.apply(frame)
+        erosion = cv2.erode(fgmask, kernel, iterations = 1)
+        avg_white = np.argwhere(erosion == 255).tolist()
+        old_pos = new_pos
+
+        try:
+            if avg_white[0] and len(avg_white)>100:
+                ws = websocket.create_connection(host)
+                new_pos = np.mean([x[1] for x in avg_white])
+                vector1d = old_pos-new_pos
+                print(old_pos, new_pos)
+                send_text = "y_drift:{}".format(20*np.interp(vector1d, [-200,200], [-1,1]))
+                print(send_text)
+                ws.send(send_text)
+        except:
+            pass
         #frame = adjust_gamma(frame, .2)
         cv2.imshow("Frame", frame)
+        cv2.imshow("fg", erosion)
         key = cv2.waitKey(1) & 0xff
-        fps.update()
-    fps.stop()
-    print("[info] elapsed time {:.2f}".format(fps.elapsed()))
-    print("[INFO] approx. FPS {:.2f}".format(fps.fps()))
+        if key == 27:
+            break
     cv2.destroyAllWindows()
     cap.stop()
 
-def non_threaded():
-    cap = cv2.VideoCapture(stream)
-    fps = FPS().start()
-    print("Diplaying image")
-    while fps._numFrames < 200:
-       get, frame = cap.read()
-       # frame = cv2.resize(frame, (w, h), cv2.INTER_AREA)
-       cv2.imshow("Frame", frame)
-       key = cv2.waitKey(1) & 0xff
-       fps.update()
-    fps.stop()
-    print("[info] elapsed time {:.2f}".format(fps.elapsed()))
-    print("[INFO] approx. FPS {:.2f}".format(fps.fps()))
-    cv2.destroyAllWindows()
-    cap.release()
-# Main program logic follows:
 
 if __name__ == '__main__':
     threaded()
-    # non_threaded()
