@@ -33,7 +33,7 @@ def threaded():
     global new_pos
     cap = WebcamVideoStream(stream).start()
     fgbg = cv2.createBackgroundSubtractorMOG2()
-    print("Diplaying image")
+    print("Displaying image")
 
     while True:
         frame = cap.read()
