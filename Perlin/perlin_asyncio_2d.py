@@ -48,16 +48,17 @@ LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
 h = 5 # height of pixel matrix
 w = int(LED_COUNT/h)  # width of pixel matrix
 host = '192.168.0.18'
+# host = get_ip() 
 led_vars = {
-        "mag":1,
+        "mag":8,
         "octaves": 2,
-        "timing":0.0015,
-        "min_bright":0,
+        "timing":0.002,
+        "min_bright": 0,
         "max_bright":1.0,
         "x_drift":0,
         "y_drift":10,
         'x_stretch':1,
-        'y_stretch':1,
+        'y_stretch':3,
         'blue_offset' : 1000,
         'red_offset' : 1000,
         'green_offset' : 100,
