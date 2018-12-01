@@ -5,6 +5,7 @@ import socket
 import time
 import threading
 import websockets
+import socket
 import asyncio
 import json
 
@@ -16,7 +17,20 @@ import sys
 
 args = {}
 
-with open('/home/pi/LED-MATRIX/config.json') as json_data_file:
+def get_ip():
+    """ go through hostnames, kick out '127.0.0.1', return IP address"""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+        
+
+with open('/home/pi/LED-MATRIX/Perlin/config.json') as json_data_file:
     data = json.load(json_data_file)
 print(data)
 
@@ -47,10 +61,10 @@ LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
 
 h = 5 # height of pixel matrix
 w = int(LED_COUNT/h)  # width of pixel matrix
-host = '192.168.0.18'
-# host = get_ip() 
+host = get_ip() 
+print(host)
 led_vars = {
-        "mag":8,
+        "mag":1,
         "octaves": 2,
         "timing":0.002,
         "min_bright": 0,
