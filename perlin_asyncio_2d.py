@@ -6,6 +6,7 @@ import time
 import threading
 import websockets
 import asyncio
+import json
 
 from neopixel import *
 
@@ -13,19 +14,28 @@ import argparse
 import signal
 import sys
 
+args = {}
+
+with open('/home/pi/LED-MATRIX/config.json') as json_data_file:
+    data = json.load(json_data_file)
+print(data)
+
 def signal_handler(signal, frame):
     colorWipe(strip, Color(0,0,0))
     sys.exit(0)
 
-def opt_parse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-c', action='store_true', help='clear the display on exit')
-    args = parser.parse_args()
-    if args.c:
-        signal.signal(signal.SIGINT, signal_handler)
-
+#   def opt_parse():
+parser = argparse.ArgumentParser()
+parser.add_argument('-c', action='store_true', help='clear the display on exit')
+parser.add_argument('profile', type=str, help='profile name from config.json')
+args = parser.parse_args()
+if not args.profile:
+    print("no profile")
+if args.c:
+    signal.signal(signal.SIGINT, signal_handler)
+ 
 # LED strip configuration:
-LED_COUNT      = 25 # Number of LED pixels.
+LED_COUNT      = data[args.profile]['xsize']*data[args.profile]['ysize'] # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -37,7 +47,7 @@ LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
 
 h = 5 # height of pixel matrix
 w = int(LED_COUNT/h)  # width of pixel matrix
-host = '10.0.0.41'
+host = '192.168.0.18'
 led_vars = {
         "mag":1,
         "octaves": 2,
@@ -83,8 +93,8 @@ async def build_matrix(count,red_bright, blue_bright, green_bright, mag, octaves
                 j = (w-1)-j
             y_dir, x_dir = i*mag+1+(count*y_drift), j*mag+1+(count*x_drift)
             blueColor   = int(interp(pnoise3(
-                              float(y_dir)/span,
-                              float(x_dir)/span,
+                              float(y_dir+blue_offset)/span,
+                              float(x_dir+blue_offset)/span,
                               float(count),
                               octaves=octaves),
                               0, 1.0, min_bright*255, blue_bright*max_bright))
@@ -103,23 +113,24 @@ async def build_matrix(count,red_bright, blue_bright, green_bright, mag, octaves
 
             strip.setPixelColor(led_index,
                                 Color(redColor, greenColor, blueColor ))
-    strip.show()
 
 async def display_img(strip):
     count = 0
     while 1:
         await build_matrix(count, **led_vars)
         count += led_vars['timing']
+        strip.show()
 
 # Main program logic follows:
 if __name__ == '__main__':
     # Process arguments
-    opt_parse()
+#    args = opt_parse()
     # Create NeoPixel object with appropriate configuration.
     strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
     # Intialize the library (must be called once before other functions).
     strip.begin()
-
+    
+    print(args.profile)
     start_server = websockets.serve(listen, host, 5555)
     loop = asyncio.get_event_loop()
     # loop.run_until_complete(asyncio.gather(start_server, display_img(strip)))

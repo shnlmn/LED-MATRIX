@@ -21,7 +21,7 @@ def opt_parse():
                 signal.signal(signal.SIGINT, signal_handler)
 
 # LED strip configuration:
-LED_COUNT      = 144      # Number of LED pixels.
+LED_COUNT      = 25      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -35,19 +35,19 @@ LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
 # h = int(LED_COUNT/w) # height of pixel matrix
 #
 # def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0):
-w = 12 # width of pixel matrix
-h = 16 # height of pixel matrix
-mag = 10 # magnification/scale of perlin field
+w = 5 # width of pixel matrix
+h = 5 # height of pixel matrix
+mag = 3 # magnification/scale of perlin field
 octaves = 2
-timing = 0.001
+timing = 0.0001
 min_bright = 0
-max_bright = 255
+max_bright = 200
 x_drift = 0
 y_drift = 1000
 x_stretch = 1
 y_stretch = 1
 red_offset = 1000
-green_offset = 100
+green_offset = 500
 
 def interp(val, smin=0.0, smax=100.0, tmin=0.0, tmax=1.0, power=1):
     return((((abs(val)-smin)*(tmax-tmin))/(smax-smin))+tmin)
@@ -102,4 +102,4 @@ if __name__ == '__main__':
     while True:
         display_img(count, strip)
         count += timing
-    #print(array(img))
+    #    print(array(count))
