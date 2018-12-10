@@ -1,3 +1,4 @@
-LED-MATRIX/*
+ledmatrix/*
 *.swp
 *.swo
+*.pyc

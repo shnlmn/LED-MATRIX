@@ -24,7 +24,7 @@ def opt_parse():
                 signal.signal(signal.SIGINT, signal_handler)
 
 # LED strip configuration:
-LED_COUNT      = 144    # Number of LED pixels.
+LED_COUNT      = 25   # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
@@ -32,12 +32,12 @@ LED_DMA        = 10   # DMA channel to use for generating signal (try 10)
 LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
-LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
+LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
 
-speed = .05 # frame time for gif animation
-w = 12 # width of pixel matrix
-h = 12 # height of pixel matrix
-play_time = 30
+speed = .03 # frame time for gif animation
+w = 5 # width of pixel matrix
+h = 5 # height of pixel matrix
+play_time = 10
 img_rgb_matrix = [[[] for x in range(h)] for y in range(w)] # construct matrix to hold rgb vals
 
 def display_img(strip, matrix):
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     # Intialize the library (must be called once before other functions).
     strip.begin()
        
-    gif_files = os.listdir("images/")
+    gif_files = os.listdir("../images/")
     gif_files = list(filter(lambda i: i[-3:] == "gif", gif_files))
     gif_count = 0
     
@@ -94,9 +94,9 @@ if __name__ == '__main__':
     file = pick_gif(gif_files)
     
     print("Loading image: "+file)
-    img = Image.open("images/"+file)
+    img = Image.open("../images/"+file)
     gif_stills = [[]]*img.n_frames
-
+    print("gif frames: ", len(gif_stills)) 
     for i in range(img.n_frames):
         gif_stills[i] = retrieve_gif_frame(img, i)
 

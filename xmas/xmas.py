@@ -1,3 +1,9 @@
+""" XMAS DISPLAY
+
+This is intended to replicate the twinkle of lights on a christmas display. 
+
+"""
+
 from numpy import *
 from noise import pnoise3
 import socket

@@ -80,7 +80,7 @@ if __name__ == '__main__':
     # Intialize the library (must be called once before other functions).
     strip.begin()
 
-    img = "images/"+sys.argv[1]
+    img = "../images/"+sys.argv[1]
 
     print("Loading image: "+img)
     img = Image.open(img)
