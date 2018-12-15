@@ -33,7 +33,7 @@ def signal_handler(signal, frame):
 # Collect info from argument
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', action='store_true', help='clear the display on exit')
-parser.add_argument('profile', type=str, help='profile name from config.json')
+parser.add_argument('-profile', type=str, help='profile name from config.json')
 args = parser.parse_args()
 if not args.profile:
     print("no profile")

@@ -2,3 +2,4 @@ ledmatrix/*
 *.swp
 *.swo
 *.pyc
+**/.idea
