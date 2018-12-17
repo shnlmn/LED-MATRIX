@@ -1,4 +1,5 @@
 ledmatrix/*
+**/venv
 *.swp
 *.swo
 *.pyc

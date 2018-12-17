@@ -1,9 +1,3 @@
-""" XMAS DISPLAY
-
-This is intended to replicate the twinkle of lights on a christmas display. 
-
-"""
-
 from numpy import *
 from noise import pnoise3
 import socket
@@ -35,22 +29,6 @@ def get_ip():
 def signal_handler(signal, frame):
     colorWipe(strip, Color(0,0,0))
     sys.exit(0)
-
-# Collect info from argument
-parser = argparse.ArgumentParser()
-parser.add_argument('-c', action='store_true', help='clear the display on exit')
-parser.add_argument('profile', type=str, help='profile name from config.json')
-args = parser.parse_args()
-if not args.profile:
-    print("no profile")
-if args.c:
-    signal.signal(signal.SIGINT, signal_handler)
-
-
-# load fixture details from config
-fixture = config.load(args.profile)
-h = fixture["h"] # height of pixel matrix
-w = fixture["w"]  # width of pixel matrix
 
 # get host dynamically
 host = get_ip() 

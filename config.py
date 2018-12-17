@@ -4,15 +4,19 @@ import sys
 
 #filename = os.path.abspath(sys.argv[0]+"/../../")+'/config.ini'
 filename = os.path.join(os.path.dirname(__file__), "config.ini")
-#print(os.path.dirname(__file__))
-#print(filename)
+print(os.path.dirname(__file__))
+print(filename)
 
 config = configparser.RawConfigParser()
 config.read(filename)
+def read_sections():
+
+    return config.sections() 
+
 
 def load(fixture):
     fixturevars = {
-            "w": config.getint(fixture, 'w'),
+            "w":config.getint(fixture, 'w'),
             "h":config.getint(fixture, 'h'),
             "LED_COUNT":config.getint(fixture, 'w')*config.getint(fixture, 'h'),
             "LED_PIN":config.getint(fixture, 'LED_PIN'),
