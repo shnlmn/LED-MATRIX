@@ -117,6 +117,8 @@ async def display_img(strip):
         count += led_vars['timing']
         strip.show()
 
+def play():
+    print("PLAYING PERLIN NOISE!!!!")
 # Main program logic follows:
 if __name__ == '__main__':
     # Process arguments

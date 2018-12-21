@@ -48,6 +48,9 @@ def display_img(strip):
                 strip.setPixelColor(led_index, Color(*color))
             strip.show()
 
+def play():
+    print("PLAYING YOUTUBE VIDS BRO!!!!!")
+
 # Main program logic follows:
 if __name__ == '__main__':
     pass

@@ -9,25 +9,35 @@ __author__ = 'shaleaman'
 import Perlin.perlin2d
 import Video.gifplayer
 import Video.ytplayer 
+from neopixel import *
+from device_list import devices as dl
 import sys
 import os
 import argparse
 import config
 
-
 players = {
             "perlin2d":{
                 "file":"Perlin/perlin2d.py",
                 "name":"Perlin noise color field",
-                "desc":"Play perlin noise with web interface"},
+                "desc":"Play perlin noise with web interface",
+                "order": 0,
+                "func": Perlin.perlin2d.play
+                },
             "gifplayer":{
                 "file":"Video/gifplayer.py",
                 "name":"GIF Player",
-                "desc":"Play GIF from local files or url"},
+                "desc":"Play GIF from local files or url",
+                "order": 1,
+                "func": Video.gifplayer.play
+
+                },
             "ytplayer":{
                 "file":"Video/ytplayer.py",
                 "name":"YouTube Player",
-                "desc":"Play a youtube video from url"
+                "desc":"Play a youtube video from url",
+                "order": 2,
+                "func": Video.ytplayer.play
                 }
         }
 # Collect info from argument
@@ -57,10 +67,38 @@ def load_config(type):
 if __name__ == "__main__":
 
     print("LED COLOR MATRIX CONTROLLER")
-    
+
+    # READ CONFIGURATION LIST 
     config_list = read_config()
+
+    # PRINT LIST    
     for i,section in enumerate(config_list,1):
         print("{}: {}".format(i, section))
-    player_select = int(input("Select type of player:"))
-    player = config.load(config_list[player_select-1])
-    print(player)   
+    
+    # PROMPT USER FOR SELECTION
+    config_select = int(input("Select LED matrix configuration:"))
+    seld_config = config.load(config_list[config_select-1])
+    for k,v in seld_config.items():
+        print(type(v), v)
+
+    # SET STRIP TO CONFIG
+    strip = Adafruit_NeoPixel(seld_config['LED_COUNT'],
+                              seld_config['LED_PIN'], 
+                              seld_config['LED_FREQ_HZ'],
+                              seld_config['LED_DMA'],
+                              seld_config['LED_INVERT'],
+                              seld_config['LED_BRIGHTNESS'],,
+                              seld_config['LED_CHANNEL'],
+                              dl[seld_config['LED_STRIP']])
+
+    #strip = Adafruit_NeoPixel(25, 18, 800000, 10, False, 255, 0, ws.WS2811_STRIP_GBR)
+    # DISPLAY OPTIONS FOR PLAYERS
+    for i, player in enumerate(sorted(players.keys(), key=lambda x: players[x]["order"]),1):
+        print("{}: {} - {}".format(i,players[player]['name'], players[player]['desc']))
+
+    # PROMPT USER FOR PLAYER SELECTION 
+    player_select = int(input("Choose a player:"))
+    seld_player = [v for v in players.values() if player_select-1 is v["order"]][0]
+
+    print(seld_player['func']())
+
