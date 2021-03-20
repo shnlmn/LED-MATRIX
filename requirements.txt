@@ -16,7 +16,7 @@ gpiozero==1.4.1
 idna==2.2
 ipaddress==1.0.17
 itsdangerous==0.24
-Jinja2==2.8
+Jinja2==2.11.3
 keyring==10.1
 keyrings.alt==1.3
 -e git+https://github.com/shaleaman/LED-MATRIX.git@bb747f5c8862209ed5c6900370c0fea9ff64d641#egg=ledmatrix
