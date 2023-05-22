@@ -1,3 +1,5 @@
+#!/usr/bin/python3  
+import time
 from numpy import *
 from PIL import Image
 from noise import pnoise3
@@ -42,21 +44,21 @@ LED_INVERT     = False   # True to invert the signal (when using NPN transistor 
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP      = ws.WS2811_STRIP_RGB   # Strip type and colour ordering
 
-h = 12 # height of pixel matrix
-w = int(LED_COUNT/h) # width of pixel matrix
+h = 12 # height of pixel matrix              (i, Y) 12
+w = int(LED_COUNT/h) # width of pixel matrix (j, X) 16
 host = get_ip() 
 led_vars = {
-        "mag":8,
+        "mag":5,
         "octaves": 2,
-        "timing":0.002,
+        "timing":0.003,
         "min_bright": 0,
         "max_bright":1.0,
         "x_drift":0,
-        "y_drift":10,
-        'x_stretch':1,
-        'y_stretch':3,
+        "y_drift":0,
+        'x_stretch':3,
+        'y_stretch':1,
         'blue_offset' : 1000,
-        'red_offset' : 1000,
+        'red_offset' : 4000,
         'green_offset' : 100,
         'red_bright' : 255,
         'blue_bright' : 255,
@@ -72,6 +74,9 @@ async def listen(websocket, path):
     led_vars[command] = float(value)
     print("< {}:{}".format(command, value))
 
+#h = 12 # height of pixel matrix              (i, Y) 12
+#w = int(LED_COUNT/h) # width of pixel matrix (j, X) 16
+
 async def build_matrix(count,red_bright, blue_bright, green_bright, mag, octaves,timing, min_bright, max_bright, x_drift,
                         y_drift, x_stretch, y_stretch, red_offset, green_offset, blue_offset):
     await asyncio.sleep(0)
@@ -82,30 +87,32 @@ async def build_matrix(count,red_bright, blue_bright, green_bright, mag, octaves
             tmin = tmax
         return((((abs(val)-smin)*(tmax-tmin))/(smax-smin))+tmin)
     span = w*h
+    z_shift = count*timing
+
     img_rgb_matrix = [[]]*span
-    for i in range(h):
-        for j in range(w):
-            led_index = (w*h)-1 - int(i*w+j)
+    for i in range(w):
+        for j in range(h):
+            led_index = (w*h)-1 - int(i*h+j)
             if i%2 == 0:
                 j = (w-1)-j
-            y_dir, x_dir = i*mag+1+(count*y_drift), j*mag+1+(count*x_drift)
+            y_dir, x_dir = (i*mag)+1+(count*y_drift), (j*mag)+1+(count*x_drift)
             blueColor   = int(interp(pnoise3(
                               float(y_dir+blue_offset)/span,
                               float(x_dir+blue_offset)/span,
-                              float(count),
+                              float(z_shift),
                               octaves=octaves),
                               0, 1.0, min_bright*255, blue_bright*max_bright))
 
             redColor    = int(interp(pnoise3(
                               float(y_dir+red_offset)/span,
                               float(x_dir+red_offset)/span,
-                              float(count), octaves=octaves),
+                              float(z_shift), octaves=octaves),
                               0, 1.0, min_bright*255, red_bright*max_bright))
 
             greenColor  = int(interp(pnoise3(
                               float(y_dir+green_offset)/span,
                               float(x_dir+green_offset)/span,
-                              float(count), octaves=octaves),
+                              float(z_shift), octaves=octaves),
                               0, 1.0, min_bright*255, green_bright*max_bright))
 
             strip.setPixelColor(led_index,
@@ -114,11 +121,17 @@ async def build_matrix(count,red_bright, blue_bright, green_bright, mag, octaves
 
 async def display_img(strip):
     count = 0
+    today = time.localtime().tm_yday
+    print(today)
     while 1:
+        if today != time.localtime().tm_yday:
+            count = 0
+            today = time.localtime().tm_yday
+            print(today)
         await build_matrix(count, **led_vars)
-        count += led_vars['timing']
-
+        count += 1
 # Main program logic follows:
+        
 if __name__ == '__main__':
     # Process arguments
     opt_parse()
